@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elite Auto Detailing — AI Business Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .app { display: flex; min-height: 100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 232px;
+    flex-shrink: 0;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .brand { padding: 4px 8px 20px; border-bottom: 1px solid #1e293b; margin-bottom: 16px; }
+  .brand h1 { font-size: 19px; color: #fff; font-weight: 700; letter-spacing: -0.01em; }
+  .brand p { font-size: 12.5px; color: #94a3b8; margin-top: 3px; }
+  .brand .loc { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; padding: 0 8px; margin: 6px 0 8px; }
+  .nav-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; text-align: left;
+    background: none; border: none; cursor: pointer;
+    color: #cbd5e1; font-size: 14.5px; font-weight: 500;
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 2px;
+    font-family: inherit;
+  }
+  .nav-btn:hover { background: #1e293b; color: #fff; }
+  .nav-btn.active { background: #1d4ed8; color: #fff; }
+  .nav-btn .count {
+    background: #334155; color: #e2e8f0; font-size: 11px; font-weight: 700;
+    padding: 1px 7px; border-radius: 999px;
+  }
+  .nav-btn.active .count { background: rgba(255,255,255,0.22); color: #fff; }
+  .side-foot { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid #1e293b; }
+  .side-foot .price { font-size: 13px; color: #e2e8f0; font-weight: 600; }
+  .side-foot .price span { color: #94a3b8; font-weight: 400; display: block; font-size: 12px; margin-top: 2px; }
+  .ai-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #0ea5e9; color: #fff; font-size: 11.5px; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px; margin-top: 10px;
+  }
+  .ai-chip .dot { width: 7px; height: 7px; background: #fff; border-radius: 50%; }
+
+  /* ---------- Main ---------- */
+  .main { flex: 1; min-width: 0; padding: 26px 30px 40px; }
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  .topbar h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: #0f172a; }
+  .topbar p { color: #64748b; font-size: 14px; margin-top: 4px; max-width: 640px; }
+  .date-badge {
+    flex-shrink: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 999px;
+    padding: 7px 14px; font-size: 13px; font-weight: 600; color: #334155;
+  }
+
+  .tab { display: none; }
+  .tab.active { display: block; }
+
+  /* ---------- Cards & KPI ---------- */
+  .card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 20px 22px; margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  }
+  .card h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+  .card .sub { font-size: 13px; color: #64748b; margin-bottom: 14px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
+  .kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+  .kpi .label { font-size: 12.5px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .kpi .value { font-size: 28px; font-weight: 700; color: #0f172a; margin-top: 6px; letter-spacing: -0.02em; }
+  .kpi .delta { font-size: 12.5px; margin-top: 4px; color: #64748b; }
+  .kpi .delta b { color: #15803d; font-weight: 700; }
+  .two-col { display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px; }
+  @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .two-col { grid-template-columns: 1fr; } .sidebar { display: none; } }
+
+  /* ---------- Chart (CSS bars) ---------- */
+  .bars { display: flex; align-items: flex-end; gap: 28px; height: 190px; padding: 10px 6px 0; }
+  .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .bar-item .amt { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  .bar { width: 100%; max-width: 72px; background: #2563eb; border-radius: 6px 6px 0 0; }
+  .bar-item:last-child .bar { background: #0ea5e9; }
+  .bar-item .wk { font-size: 12.5px; color: #64748b; margin-top: 8px; }
+  .chart-foot { border-top: 1px solid #f1f5f9; margin-top: 12px; padding-top: 12px; font-size: 13px; color: #64748b; }
+  .chart-foot b { color: #0f172a; }
+
+  /* ---------- AI panel ---------- */
+  .ai-panel { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .ai-panel h3 { color: #1e40af; }
+  .ai-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid #dbeafe; font-size: 14px; }
+  .ai-row:last-child { border-bottom: none; }
+  .ai-row .n { font-weight: 700; color: #1e40af; font-size: 16px; }
+
+  /* ---------- Tables ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; padding: 8px 10px; border-bottom: 2px solid #e2e8f0; }
+  td { padding: 11px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  td .strong { font-weight: 600; color: #0f172a; }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge.green { background: #dcfce7; color: #166534; }
+  .badge.amber { background: #fef3c7; color: #92400e; }
+  .badge.red { background: #fee2e2; color: #991b1b; }
+  .badge.blue { background: #dbeafe; color: #1e40af; }
+  .badge.grey { background: #f1f5f9; color: #475569; }
+
+  /* ---------- Alerts / misc ---------- */
+  .alert {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+    padding: 13px 16px; font-size: 14px; color: #78350f; margin-bottom: 18px;
+  }
+  .alert b { color: #92400e; }
+  .note { font-size: 13px; color: #64748b; margin-top: 10px; }
+  .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .filter-row label { font-size: 13.5px; color: #475569; font-weight: 600; }
+  select {
+    font-family: inherit; font-size: 14px; padding: 7px 10px;
+    border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a;
+  }
+  .stat-line { display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 14px; }
+  .stat-line div { font-size: 14px; color: #475569; }
+  .stat-line b { color: #0f172a; font-size: 16px; }
+  .exp-row { display: grid; grid-template-columns: 170px 1fr 90px; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+  .exp-row:last-child { border-bottom: none; }
+  .exp-track { background: #f1f5f9; border-radius: 999px; height: 10px; overflow: hidden; }
+  .exp-fill { height: 100%; background: #2563eb; border-radius: 999px; }
+  .exp-val { text-align: right; font-weight: 700; color: #0f172a; }
+  .total-row { display: flex; justify-content: space-between; border-top: 2px solid #e2e8f0; margin-top: 12px; padding-top: 12px; font-size: 15px; font-weight: 700; color: #0f172a; }
+  .task { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid #f1f5f9; font-size: 14.5px; }
+  .task:last-child { border-bottom: none; }
+  .task input { width: 18px; height: 18px; margin-top: 2px; accent-color: #2563eb; cursor: pointer; flex-shrink: 0; }
+  .task.done { color: #94a3b8; }
+  .task.done .t-title { text-decoration: line-through; }
+  .task .t-title { font-weight: 600; color: #0f172a; }
+  .task.done .t-title { color: #94a3b8; }
+  .task .t-meta { font-size: 12.5px; color: #64748b; margin-top: 1px; }
+  .task .spacer { flex: 1; }
+  .foot { text-align: center; color: #94a3b8; font-size: 12.5px; margin-top: 26px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>Elite Auto Detailing</h1>
+      <p>AI Business Dashboard</p>
+      <p class="loc">Concord, CA</p>
+    </div>
+    <div class="nav-label">Dashboard</div>
+    <button class="nav-btn active" data-tab="overview">Overview</button>
+    <button class="nav-btn" data-tab="leads">Leads <span class="count">84</span></button>
+    <button class="nav-btn" data-tab="bookings">Bookings <span class="count">8</span></button>
+    <button class="nav-btn" data-tab="inventory">Inventory</button>
+    <button class="nav-btn" data-tab="expenses">Expenses</button>
+    <button class="nav-btn" data-tab="ads">Ads</button>
+    <button class="nav-btn" data-tab="operations">Operations</button>
+    <div class="side-foot">
+      <div class="price">One-time setup $1,650<span>No monthly fee &middot; yours to keep</span></div>
+      <span class="ai-chip"><span class="dot"></span>AI running</span>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="page-title">Overview</h2>
+        <p id="page-sub">Your whole shop in one place. AI tracks your money, your leads, and your day — so nothing slips through.</p>
+      </div>
+      <div class="date-badge">November 2026</div>
+    </div>
+
+    <!-- ======== OVERVIEW ======== -->
+    <section class="tab active" id="tab-overview">
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">Revenue this month</div>
+          <div class="value">$18,600</div>
+          <div class="delta"><b>&uarr; 18%</b> vs last month</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Jobs completed</div>
+          <div class="value">62</div>
+          <div class="delta">Avg ticket <b>$300</b></div>
+        </div>
+        <div class="kpi">
+          <div class="label">New leads</div>
+          <div class="value">84</div>
+          <div class="delta"><b>74%</b> booked so far</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Net profit</div>
+          <div class="value">$11,790</div>
+          <div class="delta">Revenue $18,600 &minus; expenses $6,810</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h3>Revenue by week</h3>
+          <p class="sub">November 2026 &middot; all completed jobs</p>
+          <div class="bars">
+            <div class="bar-item"><span class="amt">$4,200</span><div class="bar" style="height:82%"></div><span class="wk">Week 1</span></div>
+            <div class="bar-item"><span class="amt">$4,800</span><div class="bar" style="height:94%"></div><span class="wk">Week 2</span></div>
+            <div class="bar-item"><span class="amt">$4,500</span><div class="bar" style="height:88%"></div><span class="wk">Week 3</span></div>
+            <div class="bar-item"><span class="amt">$5,100</span><div class="bar" style="height:100%"></div><span class="wk">Week 4</span></div>
+          </div>
+          <p class="chart-foot">Best week so far: <b>Week 4 &middot; $5,100</b>. Total for the month: <b>$18,600</b>.</p>
+        </div>
+
+        <div class="card ai-panel">
+          <h3>What the AI did this month</h3>
+          <p class="sub">This is the part that pays for itself.</p>
+          <div class="ai-row"><span>Missed calls answered</span><span class="n">14</span></div>
+          <div class="ai-row"><span>Leads followed up</span><span class="n">12</span></div>
+          <div class="ai-row"><span>Appointments booked by AI</span><span class="n">9</span></div>
+          <div class="ai-row"><span>Low-stock items flagged</span><span class="n">2</span></div>
+          <div class="ai-row"><span>Reminders sent to customers</span><span class="n">31</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Needs your attention</h3>
+        <p class="sub">Two things worth a look today.</p>
+        <div class="alert"><b>Low stock:</b> Ceramic coating kits (3 left) and Wax / sealant (4 left). The AI flagged both — reorder before the weekend rush.</div>
+        <div style="font-size:14.5px;">You have <b>8 appointments</b> booked for Thu&ndash;Mon worth <b>$3,350</b>. The AI already sent reminders to all of them.</div>
+      </div>
+    </section>
+
+    <!-- ======== LEADS ======== -->
+    <section class="tab" id="tab-leads">
+      <div class="card">
+        <h3>Leads this month</h3>
+        <p class="sub">Every person who asked about a detail — and what happened next.</p>
+        <div class="stat-line">
+          <div>New leads <b>84</b></div>
+          <div>Booked <b>62</b></div>
+          <div>AI following up <b>12</b></div>
+          <div>No answer <b>10</b></div>
+        </div>
+        <div class="stat-line" style="font-size:13.5px;">
+          <div>Google Ads <b>26</b></div>
+          <div>Instagram Ads <b>12</b></div>
+          <div>Instagram (organic) <b>12</b></div>
+          <div>Referrals <b>18</b></div>
+          <div>Walk-ins / website <b>16</b></div>
+        </div>
+        <div class="filter-row">
+          <label for="lead-filter">Show:</label>
+          <select id="lead-filter">
+            <option value="all">All leads</option>
+            <option value="Booked">Booked</option>
+            <option value="AI followed up">AI followed up</option>
+            <option value="No answer">No answer</option>
+          </select>
+        </div>
+        <table id="leads-table">
+          <thead>
+            <tr><th>Name</th><th>Service</th><th>Source</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr data-status="Booked"><td class="strong">Marcus T.</td><td>Full Detail</td><td>Google Ads</td><td><span class="badge green">Booked</span></td><td>Nov 10</td></tr>
+            <tr data-status="Booked"><td class="strong">Priya S.</td><td>Ceramic Coating</td><td>Instagram</td><td><span class="badge green">Booked</span></td><td>Nov 10</td></tr>
+            <tr data-status="AI followed up"><td class="strong">David R.</td><td>Interior Detail</td><td>Referral</td><td><span class="badge blue">AI followed up</span></td><td>Nov 9</td></tr>
+            <tr data-status="Booked"><td class="strong">Angela M.</td><td>Full Detail</td><td>Google Ads</td><td><span class="badge green">Booked</span></td><td>Nov 9</td></tr>
+            <tr data-status="AI followed up"><td class="strong">Chris B.</td><td>Paint Correction</td><td>Website</td><td><span class="badge blue">AI followed up</span></td><td>Nov 8</td></tr>
+            <tr data-status="Booked"><td class="strong">Sofia L.</td><td>Exterior Detail</td><td>Walk-in</td><td><span class="badge green">Booked</span></td><td>Nov 8</td></tr>
+            <tr data-status="No answer"><td class="strong">James W.</td><td>Full Detail</td><td>Google Ads</td><td><span class="badge red">No answer</span></td><td>Nov 7</td></tr>
+            <tr data-status="AI followed up"><td class="strong">Nadia K.</td><td>Ceramic Coating</td><td>Instagram</td><td><span class="badge blue">AI followed up</span></td><td>Nov 7</td></tr>
+            <tr data-status="Booked"><td class="strong">Tom H.</td><td>Interior Detail</td><td>Referral</td><td><span class="badge green">Booked</span></td><td>Nov 6</td></tr>
+            <tr data-status="No answer"><td class="strong">Elena G.</td><td>Full Detail</td><td>Google Ads</td><td><span class="badge red">No answer</span></td><td>Nov 6</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Showing the 10 most recent of 84 leads this month. &ldquo;AI followed up&rdquo; means the AI texted or called the lead back after a missed call — you didn&rsquo;t have to lift a finger.</p>
+      </div>
+    </section>
+
+    <!-- ======== BOOKINGS ======== -->
+    <section class="tab" id="tab-bookings">
+      <div class="card">
+        <h3>Upcoming appointments</h3>
+        <p class="sub">Thu Nov 12 &ndash; Mon Nov 16 &middot; 8 appointments &middot; $3,350 in booked work</p>
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Time</th><th>Customer</th><th>Service</th><th>Price</th><th>Booked by</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Thu, Nov 12</td><td>9:00 AM</td><td class="strong">Marcus T.</td><td>Full Detail</td><td>$250</td><td><span class="badge grey">You</span></td></tr>
+            <tr><td>Thu, Nov 12</td><td>1:00 PM</td><td class="strong">Priya S.</td><td>Ceramic Coating</td><td>$850</td><td><span class="badge blue">AI</span></td></tr>
+            <tr><td>Fri, Nov 13</td><td>10:00 AM</td><td class="strong">David R.</td><td>Interior Detail</td><td>$180</td><td><span class="badge blue">AI</span></td></tr>
+            <tr><td>Fri, Nov 13</td><td>2:00 PM</td><td class="strong">Angela M.</td><td>Full Detail</td><td>$250</td><td><span class="badge grey">You</span></td></tr>
+            <tr><td>Sat, Nov 14</td><td>9:00 AM</td><td class="strong">Chris B.</td><td>Paint Correction</td><td>$600</td><td><span class="badge blue">AI</span></td></tr>
+            <tr><td>Sat, Nov 14</td><td>11:30 AM</td><td class="strong">Sofia L.</td><td>Exterior Detail</td><td>$120</td><td><span class="badge grey">You</span></td></tr>
+            <tr><td>Sat, Nov 14</td><td>2:00 PM</td><td class="strong">James W.</td><td>Full Detail</td><td>$250</td><td><span class="badge blue">AI</span></td></tr>
+            <tr><td>Mon, Nov 16</td><td>9:00 AM</td><td class="strong">Nadia K.</td><td>Ceramic Coating</td><td>$850</td><td><span class="badge blue">AI</span></td></tr>
+          </tbody>
+        </table>
+        <p class="note">5 of these 8 were booked by the AI — including 2 ceramic coatings worth $1,700. Reminders are already sent, so no-shows stay low.</p>
+      </div>
+    </section>
+
+    <!-- ======== INVENTORY ======== -->
+    <section class="tab" id="tab-inventory">
+      <div class="alert"><b>AI flagged 2 items running low:</b> Ceramic coating kit (3 left) and Wax / sealant (4 left). Reorder point is 5 — order now and they&rsquo;ll arrive before Saturday.</div>
+      <div class="card">
+        <h3>Supplies on hand</h3>
+        <p class="sub">What you have, what&rsquo;s running low, and what to reorder.</p>
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Stock</th><th>Reorder at</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="strong">Ceramic coating kit</td><td>3</td><td>5</td><td><span class="badge amber">Low — AI flagged</span></td></tr>
+            <tr><td class="strong">Interior cleaner (1 gal)</td><td>6</td><td>3</td><td><span class="badge green">OK</span></td></tr>
+            <tr><td class="strong">Car shampoo (1 gal)</td><td>12</td><td>4</td><td><span class="badge green">OK</span></td></tr>
+            <tr><td class="strong">Microfiber towels (pack)</td><td>24</td><td>8</td><td><span class="badge green">OK</span></td></tr>
+            <tr><td class="strong">Wax / sealant</td><td>4</td><td>5</td><td><span class="badge amber">Low — AI flagged</span></td></tr>
+            <tr><td class="strong">Glass cleaner</td><td>9</td><td>3</td><td><span class="badge green">OK</span></td></tr>
+            <tr><td class="strong">Tire dressing</td><td>7</td><td>3</td><td><span class="badge green">OK</span></td></tr>
+            <tr><td class="strong">Clay bars</td><td>15</td><td>5</td><td><span class="badge green">OK</span></td></tr>
+          </tbody>
+        </table>
+        <p class="note">The AI watches stock against your reorder points and flags anything that will run out before your next big weekend — so you never have to turn a job away because you&rsquo;re out of product.</p>
+      </div>
+    </section>
+
+    <!-- ======== EXPENSES ======== -->
+    <section class="tab" id="tab-expenses">
+      <div class="card">
+        <h3>Expenses — November 2026</h3>
+        <p class="sub">Where the money went. Total matches the Overview profit math.</p>
+        <div class="exp-row"><span>Rent</span><div class="exp-track"><div class="exp-fill" style="width:100%"></div></div><span class="exp-val">$2,400</span></div>
+        <div class="exp-row"><span>Supplies &amp; chemicals</span><div class="exp-track"><div class="exp-fill" style="width:77%"></div></div><span class="exp-val">$1,850</span></div>
+        <div class="exp-row"><span>Ads / marketing</span><div class="exp-track"><div class="exp-fill" style="width:48%"></div></div><span class="exp-val">$1,140</span></div>
+        <div class="exp-row"><span>Equipment / maintenance</span><div class="exp-track"><div class="exp-fill" style="width:25%"></div></div><span class="exp-val">$600</span></div>
+        <div class="exp-row"><span>Insurance</span><div class="exp-track"><div class="exp-fill" style="width:18%"></div></div><span class="exp-val">$420</span></div>
+        <div class="exp-row"><span>Utilities</span><div class="exp-track"><div class="exp-fill" style="width:17%"></div></div><span class="exp-val">$400</span></div>
+        <div class="total-row"><span>Total expenses</span><span>$6,810</span></div>
+        <p class="note">Revenue $18,600 &minus; expenses $6,810 = <b>$11,790 profit</b>. The $1,140 in ads is the same spend shown in the Ads tab — and it brought in $8,400 of work.</p>
+      </div>
+    </section>
+
+    <!-- ======== ADS ======== -->
+    <section class="tab" id="tab-ads">
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">Ad spend</div>
+          <div class="value">$1,140</div>
+          <div class="delta">November 2026</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Leads from ads</div>
+          <div class="value">38</div>
+          <div class="delta">of 84 total leads</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Cost per lead</div>
+          <div class="value">$30.00</div>
+          <div class="delta">Spend &divide; leads</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Return on ads</div>
+          <div class="value">7.37&times;</div>
+          <div class="delta"><b>$8,400</b> of work from $1,140</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Where the ad money went</h3>
+        <p class="sub">Both channels are pulling their weight at $30 a lead.</p>
+        <table>
+          <thead>
+            <tr><th>Channel</th><th>Spend</th><th>Leads</th><th>Cost per lead</th><th>Bookings</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="strong">Google Ads</td><td>$780</td><td>26</td><td>$30.00</td><td>19</td></tr>
+            <tr><td class="strong">Instagram Ads</td><td>$360</td><td>12</td><td>$30.00</td><td>9</td></tr>
+          </tbody>
+        </table>
+        <p class="note">28 of the 38 ad leads turned into booked jobs (19 from Google, 9 from Instagram) — that&rsquo;s the $8,400. The other 34 jobs this month came from referrals, walk-ins, and organic Instagram.</p>
+      </div>
+    </section>
+
+    <!-- ======== OPERATIONS ======== -->
+    <section class="tab" id="tab-operations">
+      <div class="card">
+        <h3>Today&rsquo;s checklist</h3>
+        <p class="sub">What needs doing, and what the AI already handled. Tick things off as you go.</p>
+        <div class="task done">
+          <input type="checkbox" checked>
+          <div><div class="t-title">Confirm Saturday appointments</div><div class="t-meta">AI sent reminders to all 3 customers</div></div>
+          <span class="spacer"></span><span class="badge blue">AI done</span>
+        </div>
+        <div class="task">
+          <input type="checkbox">
+          <div><div class="t-title">Order ceramic coating kits</div><div class="t-meta">Only 3 left — flagged low by the AI</div></div>
+          <span class="spacer"></span><span class="badge amber">To do</span>
+        </div>
+        <div class="task">
+          <input type="checkbox">
+          <div><div class="t-title">Follow up with 3 no-answer leads</div><div class="t-meta">James W., Elena G., and one more — AI is texting them now</div></div>
+          <span class="spacer"></span><span class="badge blue">AI handling</span>
+        </div>
+        <div class="task">
+          <input type="checkbox">
+          <div><div class="t-title">Post before / after photos to Instagram</div><div class="t-meta">Saturday&rsquo;s ceramic coating — good one for ads</div></div>
+          <span class="spacer"></span><span class="badge grey">To do</span>
+        </div>
+        <div class="task done">
+          <input type="checkbox" checked>
+          <div><div class="t-title">Reply to 2 new Google reviews</div><div class="t-meta">Both 5 stars — thanked them, asked for a referral</div></div>
+          <span class="spacer"></span><span class="badge green">Done</span>
+        </div>
+        <div class="task">
+          <input type="checkbox">
+          <div><div class="t-title">Schedule equipment maintenance</div><div class="t-meta">Pressure washer is due for a service</div></div>
+          <span class="spacer"></span><span class="badge grey">To do</span>
+        </div>
+        <div class="task done">
+          <input type="checkbox" checked>
+          <div><div class="t-title">Send invoices for 4 completed jobs</div><div class="t-meta">AI sent them and marked 2 as paid</div></div>
+          <span class="spacer"></span><span class="badge blue">AI done</span>
+        </div>
+      </div>
+    </section>
+
+    <p class="foot">Elite Auto Detailing &middot; Concord, CA &middot; Sample data shown for demonstration</p>
+  </main>
+</div>
+
+<script>
+  // ---- Tab switching ----
+  var navBtns = document.querySelectorAll('.nav-btn');
+  var tabs = document.querySelectorAll('.tab');
+  var titles = {
+    overview: ['Overview', 'Your whole shop in one place. AI tracks your money, your leads, and your day — so nothing slips through.'],
+    leads: ['Leads', 'Every person who asked about a detail — and what the AI did with them.'],
+    bookings: ['Bookings', 'Who is coming in, what they booked, and what it is worth.'],
+    inventory: ['Inventory', 'What you have on the shelf, and what the AI says to reorder.'],
+    expenses: ['Expenses', 'Where the money went this month — and what is left over.'],
+    ads: ['Ads', 'What you spent, what it brought in, and whether it paid off.'],
+    operations: ['Operations', 'The day, in a checklist. The AI already did some of it.']
+  };
+  navBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-tab');
+      navBtns.forEach(function (b) { b.classList.remove('active'); });
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      btn.classList.add('active');
+      var tab = document.getElementById('tab-' + key);
+      if (tab) tab.classList.add('active');
+      var t = titles[key];
+      if (t) {
+        document.getElementById('page-title').textContent = t[0];
+        document.getElementById('page-sub').textContent = t[1];
+      }
+    });
+  });
+
+  // ---- Leads filter ----
+  var filter = document.getElementById('lead-filter');
+  var leadRows = document.querySelectorAll('#leads-table tbody tr');
+  if (filter) {
+    filter.addEventListener('change', function () {
+      var val = filter.value;
+      leadRows.forEach(function (row) {
+        if (val === 'all' || row.getAttribute('data-status') === val) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // ---- Operations checklist ----
+  var boxes = document.querySelectorAll('.task input[type="checkbox"]');
+  boxes.forEach(function (box) {
+    box.addEventListener('change', function () {
+      var task = box.closest('.task');
+      if (!task) return;
+      if (box.checked) { task.classList.add('done'); }
+      else { task.classList.remove('done'); }
+    });
+  });
+</script>
+</body>
+</html>
