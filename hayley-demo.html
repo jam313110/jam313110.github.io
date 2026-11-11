@@ -1,0 +1,1440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Hayley — AI Receptionist Demo</title>
+    <style>
+      :root{
+        --bg:#f4f6f5;
+        --surface:#ffffff;
+        --surface-2:#eef2f0;
+        --ink:#10201a;
+        --ink-2:#43564d;
+        --ink-3:#71827a;
+        --line:#dde5e1;
+        --accent:#0b7a55;
+        --accent-strong:#065f42;
+        --accent-soft:#e2f3ec;
+        --amber:#b97e10;
+        --amber-soft:#fdf3dd;
+        --danger:#c2413a;
+        --phone-bg:#0d1512;
+        --phone-surface:#16211c;
+        --phone-line:#26362f;
+        --phone-ink:#eef5f1;
+        --phone-ink-2:#9db4a9;
+        --radius:18px;
+        --shadow:0 18px 40px -18px rgba(16,32,26,.22);
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#0b100e;
+          --surface:#121a16;
+          --surface-2:#182420;
+          --ink:#eef5f1;
+          --ink-2:#b3c4bb;
+          --ink-3:#7e938a;
+          --line:#24352e;
+          --accent:#2fbf8f;
+          --accent-strong:#5ad3ab;
+          --accent-soft:#14352a;
+          --amber:#e0aa3e;
+          --amber-soft:#33270e;
+          --shadow:0 18px 40px -18px rgba(0,0,0,.6);
+        }
+      }
+      *{box-sizing:border-box}
+      [hidden]{display:none !important}
+      html,body{margin:0;padding:0}
+      body{
+        font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+        background:var(--bg);
+        color:var(--ink);
+        -webkit-font-smoothing:antialiased;
+        line-height:1.5;
+      }
+      button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]){min-height:2.75rem}
+      button{font-family:inherit;cursor:pointer}
+      input,select{font-family:inherit}
+      .wrap{max-width:1320px;margin:0 auto;padding:28px 20px 56px}
+
+      /* ---------- Hero ---------- */
+      .hero{display:grid;grid-template-columns:1.5fr .9fr;gap:22px;align-items:stretch;margin-bottom:22px}
+      .hero-copy{padding:10px 4px}
+      .live-pill{display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);color:var(--accent-strong);
+        font-weight:800;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+        padding:7px 12px;border-radius:999px}
+      .live-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.8s infinite}
+      @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(11,122,85,.45)}70%{box-shadow:0 0 0 8px rgba(11,122,85,0)}100%{box-shadow:0 0 0 0 rgba(11,122,85,0)}}
+      h1{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.12;letter-spacing:-.02em;margin:16px 0 12px;font-weight:800}
+      h1 .hl{color:var(--accent)}
+      .hero-sub{font-size:1.05rem;color:var(--ink-2);max-width:34rem;margin:0 0 18px}
+      .hero-points{display:flex;flex-wrap:wrap;gap:8px}
+      .hero-points span{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);
+        border-radius:999px;padding:8px 13px;font-size:.86rem;font-weight:700;color:var(--ink-2)}
+      .hero-points svg{flex:none}
+      .price-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+        padding:22px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+      .price-card .k{font-size:.78rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+      .price-row{display:flex;align-items:baseline;gap:8px}
+      .price-row .amt{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:2.4rem;font-weight:800;letter-spacing:-.02em}
+      .price-row .per{color:var(--ink-2);font-weight:700}
+      .price-card p{margin:4px 0 0;color:var(--ink-2);font-size:.92rem}
+      .price-card .fine{font-size:.8rem;color:var(--ink-3)}
+
+      /* ---------- Layout ---------- */
+      .layout{display:grid;grid-template-columns:290px minmax(0,1fr) 330px;gap:20px;align-items:start}
+      .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+      .card-head{padding:18px 20px 0}
+      .card-head h2{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:1.02rem;margin:0;letter-spacing:-.01em}
+      .card-head p{margin:4px 0 0;font-size:.86rem;color:var(--ink-3)}
+      .card-body{padding:16px 20px 20px}
+
+      /* Setup */
+      label.field-label{display:block;font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
+      #bizName{width:100%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
+        border-radius:12px;padding:11px 13px;font-size:1rem;font-weight:700;outline:none}
+      #bizName:focus{border-color:var(--accent)}
+      .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .type-btn{border:1.5px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:12px;
+        padding:10px 8px;font-size:.84rem;font-weight:700;display:flex;align-items:center;gap:8px;text-align:left;min-height:2.75rem}
+      .type-btn svg{flex:none}
+      .type-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
+      .svc-preview{margin-top:18px}
+      .svc-preview ul{list-style:none;margin:0;padding:0}
+      .svc-preview li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
+      .svc-preview li:last-child{border-bottom:none}
+      .svc-preview .nm{font-weight:600;color:var(--ink)}
+      .svc-preview .pr{font-weight:800;color:var(--accent-strong);white-space:nowrap}
+      .hours-line{margin-top:12px;font-size:.84rem;color:var(--ink-2);display:flex;gap:8px;align-items:flex-start}
+      .setup-note{margin-top:14px;background:var(--surface-2);border-radius:12px;padding:11px 13px;font-size:.83rem;color:var(--ink-2)}
+
+      /* ---------- Phone ---------- */
+      .phone{background:var(--phone-bg);border-radius:30px;padding:18px;box-shadow:0 30px 60px -20px rgba(5,15,10,.55);color:var(--phone-ink);border:1px solid var(--phone-line)}
+      .phone-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 4px 14px;border-bottom:1px solid var(--phone-line)}
+      .phone-biz{min-width:0}
+      .phone-biz .nm{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .phone-biz .sub{font-size:.78rem;color:var(--phone-ink-2)}
+      .call-state{flex:none;display:inline-flex;align-items:center;gap:7px;font-size:.75rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+        padding:7px 11px;border-radius:999px;background:var(--phone-surface);color:var(--phone-ink-2);border:1px solid var(--phone-line)}
+      .call-state .dot{width:8px;height:8px;border-radius:50%;background:#5c7268}
+      .call-state.live{color:#7fe3bb;border-color:#1e4d3a}
+      .call-state.live .dot{background:#2fbf8f;animation:pulse 1.6s infinite}
+      .hayley-row{display:flex;align-items:center;gap:14px;padding:16px 4px 6px}
+      .avatar{position:relative;flex:none;width:58px;height:58px;border-radius:50%;
+        background:linear-gradient(145deg,#17a374,#0b7a55);display:flex;align-items:center;justify-content:center;
+        font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:1.5rem;font-weight:800;color:#fff}
+      .avatar::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(47,191,143,0);transition:border-color .3s}
+      .phone.speaking .avatar::after{border-color:rgba(47,191,143,.55);animation:ringpulse 1.2s infinite}
+      @keyframes ringpulse{0%{transform:scale(.96);opacity:1}100%{transform:scale(1.14);opacity:0}}
+      .hayley-meta{min-width:0}
+      .hayley-meta .who{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:700;font-size:1.08rem}
+      .hayley-meta .role{font-size:.84rem;color:var(--phone-ink-2)}
+      .wave{display:flex;align-items:flex-end;gap:3px;height:22px;margin-left:auto;padding-right:4px}
+      .wave i{width:4px;border-radius:2px;background:#2fbf8f;height:6px}
+      .phone.speaking .wave i,.phone.listening .wave i{animation:waveb 0.9s ease-in-out infinite}
+      .phone.listening .wave i{background:#e0aa3e}
+      .wave i:nth-child(2){animation-delay:.12s}.wave i:nth-child(3){animation-delay:.24s}
+      .wave i:nth-child(4){animation-delay:.36s}.wave i:nth-child(5){animation-delay:.48s}
+      @keyframes waveb{0%,100%{height:6px}50%{height:20px}}
+      .status-line{min-height:1.4em;padding:4px 4px 10px;font-size:.88rem;color:var(--phone-ink-2)}
+      .status-line strong{color:#7fe3bb;font-weight:800}
+      .status-line .amber{color:#f2c14e}
+      .transcript{background:var(--phone-surface);border:1px solid var(--phone-line);border-radius:18px;
+        height:320px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+      .msg{max-width:86%;padding:10px 13px;border-radius:16px;font-size:.93rem;line-height:1.45;animation:msgin .25s ease}
+      @keyframes msgin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+      .msg .from{display:block;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;opacity:.75}
+      .msg.hayley{background:#1d2f27;border:1px solid #2a4436;border-bottom-left-radius:6px;align-self:flex-start;color:#e7f4ec}
+      .msg.caller{background:#0b7a55;color:#fff;border-bottom-right-radius:6px;align-self:flex-end}
+      .msg.system{align-self:center;background:transparent;color:var(--phone-ink-2);font-size:.8rem;text-align:center;padding:2px 8px}
+      .transcript .empty-note{margin:auto;text-align:center;color:var(--phone-ink-2);font-size:.9rem;max-width:16rem}
+      .caption{min-height:1.35em;font-size:.82rem;color:#f2c14e;font-style:italic;padding:8px 4px 0}
+      .chips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 2px}
+      .chip{border:1px solid var(--phone-line);background:var(--phone-surface);color:var(--phone-ink);
+        border-radius:999px;padding:9px 13px;font-size:.83rem;font-weight:600;min-height:2.5rem}
+      .chip:hover{border-color:#2fbf8f}
+      .controls{display:flex;gap:10px;padding-top:12px}
+      .btn{border:none;border-radius:14px;font-weight:800;font-size:.95rem;padding:12px 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+      .btn-call{background:#0b7a55;color:#fff;flex:1}
+      .btn-call:hover{background:#096847}
+      .btn-end{background:#3a2320;color:#ff9d94;border:1px solid #5a3530}
+      .btn-mic{background:var(--phone-surface);color:var(--phone-ink);border:1px solid var(--phone-line);width:52px;flex:none}
+      .btn-mic.on{background:#7a5b12;border-color:#a97e1c;color:#ffd968}
+      .btn-mic:disabled{opacity:.45;cursor:not-allowed}
+      .text-row{display:flex;gap:8px;padding-top:10px}
+      .text-row input{flex:1;min-width:0;background:var(--phone-surface);border:1px solid var(--phone-line);color:var(--phone-ink);
+        border-radius:12px;padding:11px 13px;font-size:.95rem;outline:none}
+      .text-row input:focus{border-color:#2fbf8f}
+      .text-row input::placeholder{color:#6d8579}
+      .btn-send{background:#e8f5ee;color:#0b3d2a;border:none;border-radius:12px;font-weight:800;padding:0 18px}
+      .voice-note{font-size:.78rem;color:var(--phone-ink-2);padding-top:10px}
+      .voice-note.warn{color:#f2c14e}
+      /* Sample call — no mic needed */
+      .sample-box{margin:4px 0 12px;background:#123528;border:1.5px solid #2fbf8f;border-radius:16px;padding:14px}
+      .sample-box .sample-title{font-weight:800;font-size:.95rem;color:#eafff5;display:flex;align-items:center;gap:8px}
+      .sample-box .sample-sub{font-size:.83rem;color:#a9c8ba;margin:4px 0 11px;line-height:1.45}
+      .btn-sample{width:100%;background:#2fbf8f;color:#06281c;border:none;border-radius:12px;font-weight:900;font-size:1rem;padding:13px 14px;display:flex;align-items:center;justify-content:center;gap:9px}
+      .btn-sample:hover{background:#5ad3ab}
+      .btn-sample.playing{background:#e0aa3e;color:#2b1f00}
+      .btn-stop-sample{width:100%;margin-top:8px;background:transparent;color:#ffb4ab;border:1px solid #7a3a32;border-radius:12px;font-weight:800;padding:10px}
+      .mic-alert{margin:0 0 12px;background:#3a2a08;border:1.5px solid #e0aa3e;border-radius:14px;padding:13px 14px;color:#ffe9a8;font-size:.88rem;line-height:1.5}
+      .mic-alert strong{color:#fff;display:block;margin-bottom:3px}
+      .mic-alert button{margin-top:9px;background:#e0aa3e;color:#2b1f00;border:none;border-radius:10px;font-weight:900;padding:9px 13px;width:100%}
+      .mic-help{margin:0 0 12px;background:#12231d;border:1.5px solid #2fbf8f;border-radius:14px;padding:14px 15px;color:#d8efe3;font-size:.88rem;line-height:1.55}
+      .mic-help strong{color:#fff}
+      .mic-help .help-title{font-weight:800;color:#fff;font-size:.95rem;margin-bottom:2px}
+      .mic-help ol{margin:8px 0 4px;padding-left:20px}
+      .mic-help li{margin:6px 0}
+      .mic-help .mic-help-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+      .mic-help .btn-mic-retry{background:#2fbf8f;color:#06281c;border:none;border-radius:10px;font-weight:900;padding:11px 13px;width:100%}
+      .mic-help .btn-mic-sample{background:transparent;color:#7fe3bb;border:1px solid #2fbf8f;border-radius:10px;font-weight:800;padding:10px 13px;width:100%}
+      .hero-sample{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+      .btn-hero-sample{background:var(--accent);color:#fff;border:none;border-radius:12px;font-weight:900;padding:13px 18px;font-size:.98rem}
+      .btn-hero-sample:hover{background:var(--accent-strong)}
+      .hero-sample-note{font-size:.85rem;color:var(--ink-2);font-weight:700}
+
+      /* ---------- Bookings ---------- */
+      .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+      .stat{background:var(--surface-2);border-radius:14px;padding:12px 10px;text-align:center}
+      .stat .v{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:1.45rem;font-weight:800;letter-spacing:-.01em}
+      .stat .l{font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);margin-top:2px}
+      .booking-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;
+        border-radius:999px;background:var(--accent);color:#fff;font-size:.82rem;font-weight:800;margin-left:8px;vertical-align:2px}
+      .booking-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+      .booking{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:13px 15px;animation:msgin .3s ease;background:var(--surface)}
+      .booking .svc{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:700;font-size:.98rem;display:flex;justify-content:space-between;gap:8px}
+      .booking .svc .price{color:var(--accent-strong);white-space:nowrap}
+      .booking .meta{font-size:.86rem;color:var(--ink-2);margin-top:3px}
+      .booking .foot{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:.75rem;color:var(--ink-3)}
+      .booking .conf{color:var(--accent-strong);font-weight:800;display:inline-flex;align-items:center;gap:5px}
+      .bookings-empty{border:1.5px dashed var(--line);border-radius:14px;padding:26px 18px;text-align:center;color:var(--ink-3)}
+      .bookings-empty .big{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink-2);font-weight:700;font-size:.98rem;margin:10px 0 4px}
+      .bookings-empty p{margin:0;font-size:.86rem}
+      .missed-note{margin-top:14px;background:var(--amber-soft);border-radius:12px;padding:11px 13px;font-size:.83rem;color:var(--ink-2)}
+      .missed-note strong{color:var(--ink)}
+
+      /* ---------- Value strip ---------- */
+      .value-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px}
+      .value-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+      .value-item .ic{width:42px;height:42px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+      .value-item h3{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:.98rem;margin:0 0 5px}
+      .value-item p{margin:0;font-size:.88rem;color:var(--ink-2)}
+      .foot-note{margin-top:22px;text-align:center;font-size:.84rem;color:var(--ink-3)}
+
+      @media (max-width:1120px){
+        .layout{grid-template-columns:1fr 1fr}
+        .bookings-card{grid-column:1/-1}
+      }
+      @media (max-width:760px){
+        .wrap{padding:18px 14px 44px}
+        .hero{grid-template-columns:1fr}
+        .layout{grid-template-columns:1fr}
+        .value-strip{grid-template-columns:1fr}
+        .transcript{height:290px}
+        .type-grid{grid-template-columns:1fr 1fr}
+      }
+      @media (prefers-reduced-motion: reduce){
+        *{animation-duration:.001s !important;transition-duration:.001s !important}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-copy">
+          <span class="live-pill"><span class="live-dot"></span> Live demo — talk to her now</span>
+          <h1>Every missed call is a lost job. <span class="hl">Hayley answers.</span></h1>
+          <p class="hero-sub">Hayley is an AI receptionist for local service businesses. She answers the phone 24/7, answers customer questions, and books appointments straight onto your calendar — so a call after hours becomes a booked job, not a voicemail nobody returns.</p>
+          <div class="hero-points">
+            <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b7a55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Answers in 2 rings, day or night</span>
+            <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b7a55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Books real appointments</span>
+            <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b7a55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Never sick, never on break</span>
+          </div>
+          <div class="hero-sample">
+            <button type="button" class="btn-hero-sample" id="btnSampleHero">▶ Listen to a sample call</button>
+            <span class="hero-sample-note">No microphone needed — just press play and listen.</span>
+          </div>
+        </div>
+        <div class="price-card">
+          <span class="k">One flat plan</span>
+          <div class="price-row"><span class="amt">$300</span><span class="per">/ month</span></div>
+          <p>Less than the value of a single booked job for most shops. One saved customer usually covers the month.</p>
+          <p class="fine">This demo runs free in your browser. On a plan, Hayley answers your real business phone line.</p>
+        </div>
+      </div>
+
+      <div class="layout">
+
+        <!-- Setup -->
+        <section class="card" aria-label="Business setup">
+          <div class="card-head">
+            <h2>1 · Set up your business</h2>
+            <p>Hayley adapts her greeting, services, and prices to your shop.</p>
+          </div>
+          <div class="card-body">
+            <label class="field-label" for="bizName">Business name</label>
+            <input id="bizName" type="text" value="Elite Auto Detailing" autocomplete="off" />
+            <div style="height:18px"></div>
+            <span class="field-label" id="typeLabel">Business type</span>
+            <div class="type-grid" role="group" aria-labelledby="typeLabel" id="typeGrid"></div>
+            <div class="svc-preview">
+              <span class="field-label">Services Hayley will offer</span>
+              <ul id="svcList"></ul>
+              <div class="hours-line">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span id="hoursLine"></span>
+              </div>
+            </div>
+            <div class="setup-note">Change anything above, then start a call — Hayley greets callers with <strong>your</strong> business name and books <strong>your</strong> services.</div>
+          </div>
+        </section>
+
+        <!-- Phone -->
+        <section aria-label="Live call with Hayley">
+          <div class="phone" id="phoneCard">
+            <div class="phone-top">
+              <div class="phone-biz">
+                <div class="nm" id="phoneBizName">Elite Auto Detailing</div>
+                <div class="sub">Incoming call · answered by AI</div>
+              </div>
+              <span class="call-state" id="callState"><span class="dot"></span><span id="callStateText">Ready</span></span>
+            </div>
+
+            <div class="hayley-row">
+              <div class="avatar" aria-hidden="true">H</div>
+              <div class="hayley-meta">
+                <div class="who">Hayley</div>
+                <div class="role">AI Receptionist · <span id="callTimer">0:00</span></div>
+              </div>
+              <div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+
+            <div class="status-line" id="statusLine">Easiest way to hear her: tap <strong>Listen to a sample call</strong> below — no microphone needed.</div>
+
+            <div class="mic-alert" id="micAlert" hidden role="alert">
+              <strong>🎤 Microphone is blocked</strong>
+              Your browser blocked the mic, so Hayley can't hear you by voice — but you can still hear her. Use the sample call below, or type what a customer would say in the box under the call controls.
+              <button type="button" id="btnMicAlertSample">▶ Play the sample call instead</button>
+            </div>
+
+            <div class="mic-help" id="micHelp" hidden role="alert">
+              <div class="help-title">🎤 Microphone is blocked — here's how to turn it on</div>
+              <div>This demo's two-way call needs the mic. If you blocked it by accident, fix it in under a minute:</div>
+              <ol>
+                <li>Open this demo in the <strong>Chrome app</strong> — not inside another app's built-in browser (like a chat or social app). If you're inside another app, tap its ⋮ menu and choose <strong>“Open in Chrome”</strong>.</li>
+                <li>Tap the <strong>lock icon</strong> (or the tune/settings icon) next to the address bar at the top of Chrome.</li>
+                <li>Tap <strong>Site settings</strong>, then set <strong>Microphone</strong> to <strong>Allow</strong>.</li>
+                <li>Come back here, reload the page, then tap <strong>Start Call</strong> again.</li>
+              </ol>
+              <div>If the mic still won't turn on, you can still hear Hayley — play the sample call, or type below and she'll talk back out loud.</div>
+              <div class="mic-help-btns">
+                <button type="button" class="btn-mic-retry" id="btnMicRetry">🎤 Try the microphone again</button>
+                <button type="button" class="btn-mic-sample" id="btnMicHelpSample">▶ Play the sample call instead</button>
+              </div>
+            </div>
+
+            <div class="sample-box" aria-label="Sample call">
+              <div class="sample-title">▶ Listen to a sample call</div>
+              <p class="sample-sub">No microphone, no permission, nothing to allow. Hayley plays a full booking call out loud — greeting, name, service, day, time and phone — and the booking lands in “Bookings captured”.</p>
+              <button type="button" class="btn-sample" id="btnSample">▶ Play sample call</button>
+              <button type="button" class="btn-stop-sample" id="btnStopSample" hidden>■ Stop sample call</button>
+            </div>
+
+            <div class="transcript" id="transcript" aria-live="polite">
+              <div class="empty-note" id="emptyNote">No call yet.<br/>Tap “Play sample call” above and Hayley will run a full booking out loud — no microphone needed.</div>
+            </div>
+
+            <div class="caption" id="caption"></div>
+
+            <div class="chips" id="chips" aria-label="Try saying"></div>
+
+            <div class="controls">
+              <button class="btn btn-call" id="btnCall">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                Start Call
+              </button>
+              <button class="btn btn-mic" id="btnMic" aria-label="Toggle microphone" title="Microphone on/off">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
+              </button>
+              <button class="btn btn-end" id="btnEnd" hidden>End</button>
+            </div>
+
+            <form class="text-row" id="textForm">
+              <input id="textInput" type="text" placeholder="…or type what a customer would say" autocomplete="off" />
+              <button class="btn-send" type="submit">Send</button>
+            </form>
+            <div class="voice-note" id="voiceNote">For the live two-way call, open this page in the Chrome app and allow the microphone when asked. No mic? No problem — the sample call above needs no microphone, or just type below and Hayley still talks back.</div>
+          </div>
+        </section>
+
+        <!-- Bookings -->
+        <section class="card bookings-card" aria-label="Bookings captured">
+          <div class="card-head">
+            <h2>2 · Bookings captured<span class="booking-count" id="bookingCount">0</span></h2>
+            <p>Every appointment Hayley books on the call appears here instantly.</p>
+          </div>
+          <div class="card-body">
+            <div class="stats">
+              <div class="stat"><div class="v" id="statCalls">0</div><div class="l">Calls handled</div></div>
+              <div class="stat"><div class="v" id="statBookings">0</div><div class="l">Bookings</div></div>
+              <div class="stat"><div class="v" id="statRevenue">$0</div><div class="l">Job value saved</div></div>
+            </div>
+            <div class="bookings-empty" id="bookingsEmpty">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+              <div class="big">No bookings yet</div>
+              <p>Start a call on the left, book an appointment as a test customer, and watch it land here.</p>
+            </div>
+            <ul class="booking-list" id="bookingList"></ul>
+            <div class="missed-note"><strong>The pitch in one line:</strong> every booking above is a customer who would have hit voicemail if Hayley hadn't picked up.</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Value strip -->
+      <div class="value-strip">
+        <div class="value-item">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b7a55" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+          <h3>Answers every call, 24/7</h3>
+          <p>Nights, weekends, while you're under a car or with a client in the chair — Hayley picks up in two rings and never lets a lead ring out.</p>
+        </div>
+        <div class="value-item">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b7a55" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg></div>
+          <h3>Books, doesn't just chat</h3>
+          <p>She takes the name, the service, and the day and time, reads it back to confirm, and the appointment lands on your list — like you just saw happen live.</p>
+        </div>
+        <div class="value-item">
+          <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b7a55" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></div>
+          <h3>Handles the questions too</h3>
+          <p>Prices, hours, what a service includes — Hayley answers from your service list, then turns the conversation into a booking.</p>
+        </div>
+      </div>
+
+      <p class="foot-note">Demo tip: try asking about a price first, then let Hayley turn it into a booking — that's the moment owners buy.</p>
+    </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Business data ---------------- */
+  var BIZ = {
+    detailing: {
+      label: "Auto Detailing", icon: "car",
+      hours: "Monday to Saturday, 8am to 6pm",
+      services: [
+        { name: "Full Detail", price: 189, dur: "about 3 hours", kw: ["full"] },
+        { name: "Interior Detail", price: 129, dur: "about 2 hours", kw: ["interior", "inside"] },
+        { name: "Exterior Wash & Wax", price: 89, dur: "about 90 minutes", kw: ["exterior", "wash", "wax"] },
+        { name: "Ceramic Coating", price: 499, dur: "a full day", kw: ["ceramic", "coating"] },
+        { name: "Paint Correction", price: 349, dur: "most of a day", kw: ["paint", "correction", "scratch", "swirl"] }
+      ]
+    },
+    salon: {
+      label: "Salon / Barbershop", icon: "scissors",
+      hours: "Tuesday to Saturday, 9am to 7pm",
+      services: [
+        { name: "Haircut & Style", price: 45, dur: "about 45 minutes", kw: ["haircut", "cut", "trim"] },
+        { name: "Color & Highlights", price: 120, dur: "about 2 hours", kw: ["color", "colour", "highlight", "dye"] },
+        { name: "Balayage", price: 160, dur: "about 2 and a half hours", kw: ["balayage"] },
+        { name: "Blowout", price: 55, dur: "about 45 minutes", kw: ["blowout", "blow out", "blow dry"] },
+        { name: "Beard Trim", price: 25, dur: "about 20 minutes", kw: ["beard", "shave"] }
+      ]
+    },
+    dental: {
+      label: "Dental Office", icon: "plus",
+      hours: "Monday to Friday, 8am to 5pm",
+      services: [
+        { name: "Cleaning & Exam", price: 99, dur: "about an hour", kw: ["cleaning", "clean", "exam", "checkup", "check up"] },
+        { name: "Teeth Whitening", price: 299, dur: "about an hour", kw: ["whitening", "whiten", "white"] },
+        { name: "Invisalign Consultation", price: 0, dur: "about 30 minutes", kw: ["invisalign", "braces", "straighten"] },
+        { name: "Filling", price: 180, dur: "about 45 minutes", kw: ["filling", "cavity"] },
+        { name: "Emergency Visit", price: 75, dur: "same day where possible", kw: ["emergency", "pain", "toothache", "hurt"] }
+      ]
+    },
+    tint: {
+      label: "Tint / Wrap Shop", icon: "layers",
+      hours: "Monday to Saturday, 9am to 6pm",
+      services: [
+        { name: "Window Tint — Full Car", price: 249, dur: "about 2 to 3 hours", kw: ["tint", "window"] },
+        { name: "Ceramic Tint — Full Car", price: 399, dur: "about 3 hours", kw: ["ceramic"] },
+        { name: "Paint Protection Film", price: 899, dur: "1 to 2 days", kw: ["ppf", "protection film", "clear bra"] },
+        { name: "Vinyl Wrap — Full Car", price: 2499, dur: "3 to 5 days", kw: ["wrap", "vinyl"] },
+        { name: "Free Tint Estimate", price: 0, dur: "about 15 minutes", kw: ["estimate", "quote"] }
+      ]
+    },
+    restaurant: {
+      label: "Restaurant", icon: "utensils",
+      hours: "Every day, 11am to 10pm",
+      services: [
+        { name: "Table for 2", price: null, dur: "", kw: ["two", "2", "couple"] },
+        { name: "Table for 4", price: null, dur: "", kw: ["four", "4", "family"] },
+        { name: "Large Party (6+)", price: null, dur: "", kw: ["party", "large", "group", "six", "eight", "birthday"] },
+        { name: "Private Event", price: null, dur: "", kw: ["private", "event", "buyout"] },
+        { name: "Takeout Order", price: null, dur: "ready in about 25 minutes", kw: ["takeout", "take out", "pickup", "to go"] }
+      ]
+    },
+    hvac: {
+      label: "HVAC / Home Services", icon: "wrench",
+      hours: "Monday to Saturday, 7am to 7pm, with 24/7 emergency cover",
+      services: [
+        { name: "AC Repair Diagnostic", price: 89, dur: "about an hour", kw: ["ac", "air conditioning", "repair", "diagnostic", "not cooling"] },
+        { name: "Seasonal Tune-Up", price: 79, dur: "about an hour", kw: ["tune", "maintenance", "service"] },
+        { name: "Free Estimate", price: 0, dur: "about 30 minutes", kw: ["estimate", "quote", "new system"] },
+        { name: "Emergency Service", price: 129, dur: "same day", kw: ["emergency", "urgent", "no heat", "broke"] },
+        { name: "Duct Cleaning", price: 299, dur: "about 2 to 3 hours", kw: ["duct", "vent"] }
+      ]
+    },
+    medspa: {
+      label: "Med Spa / Wellness", icon: "sparkle",
+      hours: "Monday to Saturday, 9am to 7pm",
+      services: [
+        { name: "Signature Facial", price: 110, dur: "about an hour", kw: ["facial"] },
+        { name: "Botox Consultation", price: 0, dur: "about 30 minutes", kw: ["botox", "consult"] },
+        { name: "Laser Hair Removal", price: 149, dur: "about 30 minutes", kw: ["laser", "hair removal"] },
+        { name: "Deep Tissue Massage", price: 95, dur: "about an hour", kw: ["massage"] },
+        { name: "Chemical Peel", price: 130, dur: "about 45 minutes", kw: ["peel", "chemical"] }
+      ]
+    },
+    other: {
+      label: "Other Service Business", icon: "briefcase",
+      hours: "Monday to Friday, 9am to 5pm",
+      services: [
+        { name: "Standard Appointment", price: 75, dur: "about an hour", kw: ["appointment", "standard"] },
+        { name: "Consultation", price: 0, dur: "about 30 minutes", kw: ["consult", "consultation", "meeting"] },
+        { name: "Premium Service", price: 150, dur: "about 90 minutes", kw: ["premium"] },
+        { name: "Free Estimate", price: 0, dur: "about 20 minutes", kw: ["estimate", "quote"] }
+      ]
+    }
+  };
+
+  var ICONS = {
+    car: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>',
+    scissors: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/></svg>',
+    plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    layers: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 8.5 4.5L12 11 3.5 6.5 12 2Z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 17 8.5 4.5 8.5-4.5"/></svg>',
+    utensils: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>',
+    wrench: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+    sparkle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>',
+    briefcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>'
+  };
+
+  /* ---------------- State ---------------- */
+  var bizType = "detailing";
+  var callActive = false;
+  var stage = "idle"; // idle | intent | offer | name | service | datetime | phone | confirm | fix
+  var afterDatetime = "phone"; // "phone" first pass, "confirm" when fixing
+  var draft = { name: "", service: null, when: "", phone: "" };
+  var bookings = [];
+  var callsHandled = 0;
+  var refCounter = 1024;
+  var timerSec = 0, timerInt = null;
+  var speaking = false;
+  var voiceWanted = true;   // user hasn't muted the mic
+  var recogSupported = false;
+  var recognition = null;
+  var listening = false;
+  var samplePlaying = false;
+  var sampleTimer = null;
+  var noSpeechCount = 0;
+
+  /* ---------------- DOM ---------------- */
+  function $(id){ return document.getElementById(id); }
+  var bizNameInput = $("bizName"), typeGrid = $("typeGrid"), svcList = $("svcList"),
+      hoursLine = $("hoursLine"), phoneBizName = $("phoneBizName"),
+      phoneCard = $("phoneCard"), transcriptEl = $("transcript"), emptyNote = $("emptyNote"),
+      statusLine = $("statusLine"), captionEl = $("caption"), chipsEl = $("chips"),
+      btnCall = $("btnCall"), btnEnd = $("btnEnd"), btnMic = $("btnMic"),
+      callState = $("callState"), callStateText = $("callStateText"), callTimer = $("callTimer"),
+      voiceNote = $("voiceNote"),
+      btnSample = $("btnSample"), btnSampleHero = $("btnSampleHero"), btnStopSample = $("btnStopSample"),
+      micAlert = $("micAlert"), btnMicAlertSample = $("btnMicAlertSample"),
+      micHelp = $("micHelp"), btnMicRetry = $("btnMicRetry"), btnMicHelpSample = $("btnMicHelpSample"),
+      bookingList = $("bookingList"), bookingsEmpty = $("bookingsEmpty"),
+      bookingCount = $("bookingCount"), statCalls = $("statCalls"),
+      statBookings = $("statBookings"), statRevenue = $("statRevenue");
+
+  function biz(){ return BIZ[bizType]; }
+  function bizName(){
+    var v = (bizNameInput.value || "").trim();
+    return v || "our shop";
+  }
+  function priceText(p){
+    if (p === null || p === undefined) return "—";
+    if (p === 0) return "Free";
+    return "$" + p;
+  }
+  function priceSpeech(p){
+    if (p === null || p === undefined) return "";
+    if (p === 0) return "free";
+    return "$" + p;
+  }
+
+  /* ---------------- Setup UI ---------------- */
+  function renderTypes(){
+    typeGrid.innerHTML = "";
+    Object.keys(BIZ).forEach(function(key){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "type-btn";
+      b.setAttribute("aria-pressed", key === bizType ? "true" : "false");
+      b.innerHTML = (ICONS[BIZ[key].icon] || "") + "<span>" + BIZ[key].label + "</span>";
+      b.addEventListener("click", function(){
+        bizType = key;
+        renderTypes(); renderServices(); renderChips();
+      });
+      typeGrid.appendChild(b);
+    });
+  }
+  function renderServices(){
+    phoneBizName.textContent = bizName();
+    svcList.innerHTML = "";
+    biz().services.forEach(function(s){
+      var li = document.createElement("li");
+      var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = s.name;
+      var pr = document.createElement("span"); pr.className = "pr"; pr.textContent = priceText(s.price);
+      li.appendChild(nm); li.appendChild(pr);
+      svcList.appendChild(li);
+    });
+    hoursLine.textContent = "Open " + biz().hours + ". Hayley answers 24/7, even when you're closed.";
+  }
+  bizNameInput.addEventListener("input", function(){
+    phoneBizName.textContent = bizName();
+  });
+
+  function renderChips(){
+    var svcs = biz().services;
+    var art0 = /^[aeiou]/i.test(svcs[0].name) ? "an" : "a";
+    var art1 = svcs[1] && /^[aeiou]/i.test(svcs[1].name) ? "an" : "a";
+    var suggestions = [
+      "I'd like to book " + art0 + " " + svcs[0].name.toLowerCase(),
+      svcs[1] ? ("How much is " + art1 + " " + svcs[1].name.toLowerCase() + "?") : "What are your prices?",
+      "What are your hours?"
+    ];
+    chipsEl.innerHTML = "";
+    var label = document.createElement("span");
+    label.style.cssText = "width:100%;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9db4a9";
+    label.textContent = "Not sure what to say? Tap one:";
+    chipsEl.appendChild(label);
+    suggestions.forEach(function(text){
+      var c = document.createElement("button");
+      c.type = "button"; c.className = "chip"; c.textContent = "\u201C" + text + "\u201D";
+      c.addEventListener("click", function(){
+        if (!callActive) startCall(function(){ callerSays(text); });
+        else callerSays(text);
+      });
+      chipsEl.appendChild(c);
+    });
+  }
+
+  /* ---------------- Transcript ---------------- */
+  function addMsg(who, text){
+    if (emptyNote) { emptyNote.remove(); emptyNote = null; }
+    var d = document.createElement("div");
+    d.className = "msg " + who;
+    if (who === "system") { d.textContent = text; }
+    else {
+      var from = document.createElement("span");
+      from.className = "from";
+      from.textContent = who === "hayley" ? "Hayley" : "Caller";
+      d.appendChild(from);
+      d.appendChild(document.createTextNode(text));
+    }
+    transcriptEl.appendChild(d);
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  }
+
+  function setStatus(html){
+    statusLine.innerHTML = html;
+  }
+  function setCallState(live, text){
+    callState.classList.toggle("live", !!live);
+    callStateText.textContent = text;
+  }
+
+  /* ---------------- Speech out (text-to-speech) ---------------- */
+  var chosenVoice = null, callerVoice = null, voicesReady = false;
+  function pickVoice(){
+    if (!("speechSynthesis" in window)) return;
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return;
+    voicesReady = true;
+    var en = voices.filter(function(v){ return /^en/i.test(v.lang); });
+    var pool = en.length ? en : voices;
+    var prefs = ["Samantha", "Google US English", "Microsoft Jenny Natural", "Microsoft Jenny", "Microsoft Aria", "Microsoft Zira", "Karen", "Moira", "Fiona", "Google UK English Female"];
+    chosenVoice = null;
+    for (var i = 0; i < prefs.length && !chosenVoice; i++){
+      for (var j = 0; j < pool.length; j++){
+        if (pool[j].name.indexOf(prefs[i]) !== -1) { chosenVoice = pool[j]; break; }
+      }
+    }
+    if (!chosenVoice){
+      chosenVoice = pool.filter(function(v){ return /en[-_]US/i.test(v.lang); })[0] || pool[0];
+    }
+    // Caller: a different English voice if one exists, so the two sides sound distinct
+    callerVoice = null;
+    var callerPrefs = ["Daniel", "Google UK English Male", "Microsoft Guy", "Microsoft Ryan", "Alex"];
+    for (var a = 0; a < callerPrefs.length && !callerVoice; a++){
+      for (var b = 0; b < pool.length; b++){
+        if (pool[b].name.indexOf(callerPrefs[a]) !== -1 && pool[b] !== chosenVoice) { callerVoice = pool[b]; break; }
+      }
+    }
+    if (!callerVoice){
+      for (var c = 0; c < pool.length; c++){ if (pool[c] !== chosenVoice) { callerVoice = pool[c]; break; } }
+    }
+    if (!callerVoice) callerVoice = chosenVoice;
+  }
+  function ensureVoices(cb){
+    if (!("speechSynthesis" in window)) { cb(); return; }
+    pickVoice();
+    if (voicesReady) { cb(); return; }
+    var waited = 0;
+    var iv = setInterval(function(){
+      pickVoice(); waited += 100;
+      if (voicesReady || waited >= 900) { clearInterval(iv); cb(); }
+    }, 100);
+  }
+  if ("speechSynthesis" in window){
+    pickVoice();
+    if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener("voiceschanged", pickVoice);
+    else window.speechSynthesis.onvoiceschanged = pickVoice;
+    // Chrome/Safari often populate voices a beat late — poll briefly too
+    var vp = 0, vIv = setInterval(function(){ vp++; pickVoice(); if (voicesReady || vp > 12) clearInterval(vIv); }, 250);
+  }
+
+  var keepAliveIv = null;
+  function speakUtterance(text, who, after){
+    if (!("speechSynthesis" in window)) {
+      // No TTS in this browser: step through on a reading timer so the script still plays on screen
+      var t = setTimeout(function(){ if (after) after(); }, Math.max(1400, text.length * 42));
+      currentFallbackTimer = t;
+      return;
+    }
+    pickVoice();
+    try { window.speechSynthesis.resume(); } catch(e){}
+    var u = new SpeechSynthesisUtterance(text);
+    var v = (who === "caller") ? (callerVoice || chosenVoice) : chosenVoice;
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "en-US"; }
+    u.rate = (who === "caller") ? 0.98 : 1.0;
+    u.pitch = (who === "caller") ? 0.82 : 1.08;
+    u.volume = 1;
+    speaking = true;
+    phoneCard.classList.add("speaking");
+    phoneCard.classList.remove("listening");
+    setStatus(who === "caller" ? "<span class='amber'>Caller is speaking…</span>" : "<strong>Hayley is speaking…</strong>");
+    var done = false;
+    var fallbackTimer = null;
+    function finish(){
+      if (done) return; done = true;
+      clearTimeout(fallbackTimer);
+      clearInterval(keepAliveIv);
+      speaking = false;
+      phoneCard.classList.remove("speaking");
+      if (after) after();
+    }
+    u.onend = finish;
+    u.onerror = function(ev){
+      // 'interrupted'/'canceled' happen when we stop on purpose — don't treat as failure mid-sample
+      finish();
+    };
+    // Safety fallback if onend never fires (known browser quirk on long text).
+    // Generous estimate, and if speech is still actually playing when it fires,
+    // give it more time instead of cutting Hayley off mid-sentence.
+    var estMs = Math.max(5000, text.length * 160 + 2000);
+    function scheduleFallback(ms){
+      fallbackTimer = setTimeout(function(){
+        try {
+          if (window.speechSynthesis && window.speechSynthesis.speaking) {
+            scheduleFallback(2000);
+            return;
+          }
+        } catch(e){}
+        finish();
+      }, ms);
+    }
+    scheduleFallback(estMs);
+    // Chrome pauses long synthesis after ~15s. Only resume when it is actually
+    // paused — never proactively pause while it is playing (that kills audio on Android).
+    clearInterval(keepAliveIv);
+    keepAliveIv = setInterval(function(){
+      try { if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); } } catch(e){}
+    }, 5000);
+    window.speechSynthesis.speak(u);
+  }
+  var currentFallbackTimer = null;
+  function speak(text, after){
+    addMsg("hayley", text);
+    // Only cancel if something is actually speaking/pending — a bare cancel()
+    // followed by an immediate speak() drops the new utterance on Chrome Android.
+    if ("speechSynthesis" in window) {
+      try {
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) window.speechSynthesis.cancel();
+      } catch(e){}
+    }
+    // Give cancel() time to settle (200ms) — speaking right after cancel is dropped in some browsers
+    setTimeout(function(){ speakUtterance(text, "hayley", after); }, 200);
+  }
+
+  /* Ask the browser for the mic up front (native permission prompt).
+     Resolves to "granted", "denied", "unavailable", or "prompt".
+     We stop the stream right away — SpeechRecognition takes the mic from here. */
+  function requestMicPermission(){
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return Promise.resolve("unavailable");
+    }
+    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+      try { stream.getTracks().forEach(function(t){ t.stop(); }); } catch(e){}
+      return "granted";
+    }).catch(function(err){
+      if (err && (err.name === "NotAllowedError" || err.name === "SecurityError")) return "denied";
+      if (err && err.name === "NotFoundError") return "unavailable";
+      return "denied";
+    });
+  }
+
+  function hideMicHelp(){
+    if (micAlert) micAlert.hidden = true;
+    if (micHelp) micHelp.hidden = true;
+  }
+
+  function showMicBlocked(){
+    if (micAlert) micAlert.hidden = false;
+    if (micHelp) micHelp.hidden = false;
+    voiceWanted = false;
+    btnMic.classList.remove("on");
+    voiceNote.textContent = "Microphone is blocked — voice input is off. Play the sample call above, or type what a customer would say and press Send. Hayley will still talk back out loud.";
+    voiceNote.classList.add("warn");
+    setStatus("Mic blocked — <span class='amber'>follow the steps above to allow it, or use the sample call / type below</span>. You're not stuck: both work without a mic.");
+  }
+
+  /* ---------------- Speech in (caller talks) ---------------- */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    recogSupported = true;
+    recognition = new SR();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = function(ev){
+      var interim = "", finalText = "";
+      for (var i = ev.resultIndex; i < ev.results.length; i++){
+        if (ev.results[i].isFinal) finalText += ev.results[i][0].transcript;
+        else interim += ev.results[i][0].transcript;
+      }
+      if (interim) captionEl.textContent = "\u201C" + interim + "\u2026\u201D";
+      if (finalText.trim()){
+        noSpeechCount = 0;
+        captionEl.textContent = "";
+        stopListening();
+        callerSays(finalText.trim());
+      }
+    };
+    recognition.onerror = function(ev){
+      listening = false;
+      phoneCard.classList.remove("listening");
+      if (ev.error === "not-allowed" || ev.error === "service-not-allowed" || ev.error === "audio-capture"){
+        showMicBlocked();
+      } else if (ev.error === "network"){
+        // Speech recognition runs through Google's speech service — it needs the internet.
+        voiceWanted = false;
+        btnMic.classList.remove("on");
+        setStatus("Voice recognition needs an internet connection — check you're online, or type below and Hayley will still answer out loud.");
+      } else if (ev.error === "no-speech"){
+        // Nothing heard. Let onend restart listening a couple of times, then stop
+        // looping so we don't spin forever on a muted mic.
+        noSpeechCount++;
+        if (noSpeechCount >= 3){
+          voiceWanted = false;
+          btnMic.classList.remove("on");
+          setStatus("I didn't hear anything after a few tries — your mic may be muted, or the room is quiet. Type below and Hayley will still answer out loud.");
+        }
+      }
+      // "aborted" is expected when we stop on purpose — ignore it.
+    };
+    recognition.onend = function(){
+      listening = false;
+      phoneCard.classList.remove("listening");
+      // If we're mid-call, Hayley isn't talking, and the caller hasn't spoken yet, keep the mic open.
+      if (callActive && !samplePlaying && voiceWanted && !speaking && stage !== "idle" && stage !== "done-wait") {
+        setTimeout(function(){
+          if (callActive && !samplePlaying && voiceWanted && !speaking && !listening) startListening();
+        }, 350);
+      }
+    };
+  } else {
+    btnMic.disabled = true;
+    voiceNote.textContent = "This browser can't listen by voice — the live call needs Chrome on Android. Open this page in the Chrome app and allow the microphone. No mic? Play the sample call above, or type what a customer would say and Hayley will answer out loud.";
+    voiceNote.classList.add("warn");
+  }
+
+  function startListening(){
+    if (!recogSupported || !voiceWanted || speaking || listening || !callActive) return;
+    try {
+      recognition.start();
+      listening = true;
+      phoneCard.classList.add("listening");
+      setStatus("<span class='amber'>Listening…</span> speak now, like a customer calling in.");
+    } catch(e) { /* already running */ }
+  }
+  function stopListening(){
+    if (!recogSupported) return;
+    try { recognition.stop(); } catch(e) {}
+    listening = false;
+    phoneCard.classList.remove("listening");
+  }
+
+  function listenNext(){
+    if (callActive && voiceWanted && recogSupported) startListening();
+    else if (callActive) setStatus("Type what the customer says next, then press <strong>Send</strong>.");
+  }
+
+  /* ---------------- Conversation brain ---------------- */
+  function matchService(text){
+    var t = " " + text.toLowerCase() + " ";
+    var svcs = biz().services;
+    for (var i = 0; i < svcs.length; i++){
+      for (var j = 0; j < svcs[i].kw.length; j++){
+        if (t.indexOf(" " + svcs[i].kw[j]) !== -1 || t.indexOf(svcs[i].kw[j]) !== -1) return svcs[i];
+      }
+      if (t.indexOf(svcs[i].name.toLowerCase()) !== -1) return svcs[i];
+    }
+    return null;
+  }
+  function isYes(t){
+    return /\b(yes|yeah|yep|sure|okay|ok|sounds good|correct|that'?s right|please|book it|let'?s do it|go ahead)\b/.test(t);
+  }
+  function isNo(t){
+    return /\b(no|nope|nah|not really|that'?s all|nothing else|i'?m good|all set)\b/.test(t);
+  }
+  function looksLikeQuestion(t, raw){
+    return raw.indexOf("?") !== -1 ||
+      /\b(how much|price|cost|charge|hours|open|close|closed|where|located|location|address|do you|do they|can you|can i|what services|what do you offer|offer|available|availability|walk.?in|appointment needed|human|real person|someone|owner|manager)\b/.test(t);
+  }
+  function extractName(text){
+    var m = text.match(/(?:my name is|i'?m|i am|this is|it'?s|name'?s)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)/i);
+    var raw = m ? m[1] : text.replace(/[^A-Za-z\s'-]/g, " ").trim().split(/\s+/).slice(0, 2).join(" ");
+    if (!raw) return "there";
+    return raw.split(" ").map(function(w){
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(" ");
+  }
+  function cleanServiceText(text){
+    var s = text.replace(/\b(i want|i'?d like|i need|book|booking|schedule|get|a|an|the|please|for)\b/gi, " ").replace(/\s+/g, " ").trim();
+    if (!s) return "Appointment";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function tidyWhen(text){
+    var s = text.trim().replace(/\s+/g, " ");
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function answerQuestion(t){
+    var b = biz();
+    var svc = matchService(t);
+    if (/\b(hour|open|close|closed|when)\b/.test(t) && !/\b(book|appointment)\b/.test(t)){
+      return "We're open " + b.hours + ". I'm here around the clock though, so I can book you in right now.";
+    }
+    if (/\b(where|located|location|address|directions)\b/.test(t)){
+      return "I can text you the address and directions along with your booking confirmation — that way you've got it on your phone.";
+    }
+    if (/\b(human|real person|someone|owner|manager|person)\b/.test(t)){
+      return "I'm Hayley, the AI receptionist here — I can book you in right away, or take a message and have the team call you back. Booking is usually fastest.";
+    }
+    if (/\b(what services|services|offer|do you do|options)\b/.test(t) && !svc){
+      var names = b.services.slice(0, 4).map(function(s){ return s.name; });
+      return "We offer " + names.join(", ") + (b.services.length > 4 ? ", and more" : "") + ". I can book any of those for you.";
+    }
+    if (/\b(how much|price|cost|charge)\b/.test(t) || svc){
+      if (svc){
+        var p = priceSpeech(svc.price);
+        var line = svc.name + " is " + (svc.price === 0 ? "free" : p);
+        if (svc.dur) line += ", and takes " + svc.dur;
+        return line + ". Good value, and I can get you booked in if you'd like.";
+      }
+      var top = b.services.slice(0, 3).map(function(s){
+        return s.name + " at " + (s.price === 0 ? "free" : priceSpeech(s.price));
+      });
+      return "Happy to help with prices: " + top.join(", ") + ". I can talk you through the rest too.";
+    }
+    if (/\b(walk.?in)\b/.test(t)){
+      return "Walk-ins are welcome when there's a gap, but booking ahead guarantees your spot — it only takes a moment.";
+    }
+    if (/\b(available|availability)\b/.test(t)){
+      return "We usually have openings this week, including a couple of popular morning and afternoon slots. I can check a day that suits you.";
+    }
+    return "Good question — I can confirm the details with the team, and in the meantime I can get your appointment booked so you don't lose the spot.";
+  }
+
+  function askName(){
+    stage = "name";
+    speak("Of course, I can book that for you. May I have your name?", listenNext);
+  }
+  function askService(){
+    stage = "service";
+    var names = biz().services.slice(0, 3).map(function(s){ return s.name; });
+    speak("Thanks, " + draft.name + "! What service would you like to book? Popular ones are " + names.join(", ") + " — or just tell me what you need.", listenNext);
+  }
+  function askWhen(){
+    stage = "datetime";
+    speak("Great choice. What day and time works best for you?", listenNext);
+  }
+  function askPhone(){
+    stage = "phone";
+    speak("Perfect. And what's the best phone number for your confirmation text?", listenNext);
+  }
+  function askConfirm(){
+    stage = "confirm";
+    var svcName = draft.service ? draft.service.name : "your appointment";
+    var msg = "Let me confirm: that's a " + svcName + " for " + draft.name + ", on " + draft.when + ".";
+    if (draft.phone) msg += " I'll text the confirmation to " + draft.phone + ".";
+    msg += " Does that all sound right?";
+    speak(msg, listenNext);
+  }
+
+  function completeBooking(){
+    refCounter += Math.floor(1 + Math.random() * 3);
+    var bk = {
+      name: draft.name,
+      service: draft.service,
+      when: draft.when,
+      phone: draft.phone,
+      ref: "HLY-" + refCounter,
+      time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    };
+    bookings.unshift(bk);
+    renderBookings();
+    addMsg("system", "Booking captured — " + bk.ref);
+    stage = "intent";
+    draft = { name: "", service: null, when: "", phone: "" };
+    speak("You're all booked in, " + bk.name + "! You'll get a confirmation text shortly, and we'll see you on " + bk.when + ". Is there anything else I can help with?", listenNext);
+  }
+
+  function callerSays(raw){
+    if (samplePlaying || !callActive || !raw) return;
+    var text = raw.trim();
+    if (!text) return;
+    addMsg("caller", text);
+    var t = text.toLowerCase();
+
+    // Global: caller wants to wrap up
+    if (stage === "intent" && bookings.length > 0 && (isNo(t) || /\bthat'?s all\b/.test(t))){
+      speak("Thanks for calling " + bizName() + " — have a great day!", function(){
+        endCall(true);
+      });
+      stage = "done-wait";
+      return;
+    }
+
+    switch (stage) {
+      case "intent": {
+        var pre = matchService(t);
+        if (looksLikeQuestion(t, text) && !/\b(book|schedule|appointment|reservation|estimate)\b.*\b(please|now)\b/.test(t)) {
+          if (pre && /\b(book|schedule|want|need|get)\b/.test(t)) { draft.service = pre; askName(); break; }
+          var ans = answerQuestion(t);
+          stage = "offer";
+          speak(ans + " Would you like me to book you in?", listenNext);
+        } else if (/\b(book|schedule|appointment|reservation|reserve|estimate|quote|want|need|get)\b/.test(t)) {
+          if (pre) draft.service = pre;
+          askName();
+        } else if (looksLikeQuestion(t, text)) {
+          stage = "offer";
+          speak(answerQuestion(t) + " Would you like me to book you in?", listenNext);
+        } else {
+          if (pre) draft.service = pre;
+          speak("Absolutely, I can help with that.", function(){ askName(); });
+        }
+        break;
+      }
+      case "offer": {
+        if (isYes(t)) {
+          var preSvc = matchService(t);
+          if (preSvc) draft.service = preSvc;
+          askName();
+        } else if (isNo(t)) {
+          stage = "intent";
+          speak("No problem at all. If anything else comes up — prices, hours, or booking — I'm right here.", listenNext);
+        } else if (looksLikeQuestion(t, text)) {
+          speak(answerQuestion(t) + " Shall I book you in?", listenNext);
+        } else {
+          var preSvc2 = matchService(t);
+          if (preSvc2) draft.service = preSvc2;
+          askName();
+        }
+        break;
+      }
+      case "name": {
+        draft.name = extractName(text);
+        if (draft.service) {
+          askWhenWithThanks();
+        } else {
+          askService();
+        }
+        break;
+      }
+      case "service": {
+        var svc = matchService(t);
+        if (svc) draft.service = svc;
+        else draft.service = { name: cleanServiceText(text), price: null, dur: "" };
+        afterDatetime = (afterDatetime === "confirm-direct") ? "confirm" : "phone";
+        askWhen();
+        break;
+      }
+      case "datetime": {
+        draft.when = tidyWhen(text);
+        if (afterDatetime === "confirm") askConfirm();
+        else askPhone();
+        break;
+      }
+      case "phone": {
+        var digits = text.replace(/\D/g, "");
+        if (digits.length >= 7) {
+          draft.phone = digits.length === 10
+            ? "(" + digits.slice(0,3) + ") " + digits.slice(3,6) + "-" + digits.slice(6)
+            : digits;
+        } else if (isNo(t) || /\b(skip|don'?t|no number|none)\b/.test(t)) {
+          draft.phone = "";
+        } else {
+          draft.phone = text;
+        }
+        askConfirm();
+        break;
+      }
+      case "confirm": {
+        if (isYes(t)) {
+          completeBooking();
+        } else if (isNo(t)) {
+          stage = "fix";
+          speak("No problem — let's fix that. What should I change: the service, or the day and time?", listenNext);
+        } else if (looksLikeQuestion(t, text)) {
+          speak(answerQuestion(t) + " And shall I go ahead with that booking as I read it back?", listenNext);
+        } else {
+          speak("Sorry, I want to make sure I get this right — shall I book the " + (draft.service ? draft.service.name : "appointment") + " for " + draft.when + "?", listenNext);
+          stage = "confirm";
+        }
+        break;
+      }
+      case "fix": {
+        if (/\b(service|change it to|instead)\b/.test(t)) {
+          var ns = matchService(t);
+          if (ns) { draft.service = ns; askConfirm(); }
+          else { stage = "service"; afterDatetime = "confirm-direct"; speak("Sure — what service would you like instead?", listenNext); }
+        } else if (/\b(day|time|date|when|move|reschedule)\b/.test(t)) {
+          afterDatetime = "confirm";
+          askWhen();
+        } else {
+          afterDatetime = "confirm";
+          askWhen();
+        }
+        break;
+      }
+      default: {
+        stage = "intent";
+        speak("I'm here — would you like to book an appointment, or did you have a question?", listenNext);
+      }
+    }
+  }
+
+  // When the service is already known, thank by name then ask for the time in one utterance.
+  function askWhenWithThanks(){
+    stage = "datetime";
+    afterDatetime = "phone";
+    speak("Thanks, " + draft.name + " — I've got you down for a " + draft.service.name + ". What day and time works best for you?", listenNext);
+  }
+
+  /* ---------------- Bookings panel ---------------- */
+  function renderBookings(){
+    bookingCount.textContent = bookings.length;
+    statBookings.textContent = bookings.length;
+    statCalls.textContent = callsHandled;
+    var rev = 0;
+    bookings.forEach(function(b){ if (b.service && typeof b.service.price === "number") rev += b.service.price; });
+    statRevenue.textContent = "$" + rev.toLocaleString();
+    bookingsEmpty.style.display = bookings.length ? "none" : "block";
+    bookingList.innerHTML = "";
+    bookings.forEach(function(b){
+      var li = document.createElement("li");
+      li.className = "booking";
+      var svcRow = document.createElement("div"); svcRow.className = "svc";
+      var svcName = document.createElement("span"); svcName.textContent = b.service ? b.service.name : "Appointment";
+      var svcPrice = document.createElement("span"); svcPrice.className = "price";
+      svcPrice.textContent = b.service ? priceText(b.service.price) : "";
+      svcRow.appendChild(svcName); svcRow.appendChild(svcPrice);
+      var meta = document.createElement("div"); meta.className = "meta";
+      meta.textContent = b.name + " · " + b.when + (b.phone ? " · " + b.phone : "");
+      var foot = document.createElement("div"); foot.className = "foot";
+      var conf = document.createElement("span"); conf.className = "conf";
+      conf.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Confirmed';
+      var ref = document.createElement("span"); ref.textContent = b.ref + " · " + b.time;
+      foot.appendChild(conf); foot.appendChild(ref);
+      li.appendChild(svcRow); li.appendChild(meta); li.appendChild(foot);
+      bookingList.appendChild(li);
+    });
+  }
+
+  /* ---------------- Sample call (no mic needed) ---------------- */
+  function sampleScript(){
+    var svc = biz().services[0];
+    var svcName = svc.name;
+    var priceLine = "";
+    if (svc.price === 0) priceLine = svcName + " is free";
+    else if (typeof svc.price === "number") priceLine = svcName + " is $" + svc.price;
+    else priceLine = svcName;
+    if (svc.dur) priceLine += ", and takes " + svc.dur;
+    var when = "Friday at 10 in the morning";
+    return {
+      svc: svc, when: "Friday at 10:00 AM", phoneDisplay: "(555) 014-2289", name: "Alex Morgan",
+      steps: [
+        { who: "hayley", text: "Thank you for calling " + bizName() + "! This is Hayley, the AI receptionist. How can I help you today?" },
+        { who: "caller", text: "Hi, I'd like to book an appointment, please." },
+        { who: "hayley", text: "Of course, I can book that for you. May I have your name?" },
+        { who: "caller", text: "It's Alex Morgan." },
+        { who: "hayley", text: "Thanks, Alex! What service would you like to book?" },
+        { who: "caller", text: "A " + svcName + ", please." },
+        { who: "hayley", text: "Great choice. " + priceLine + ". What day and time works best for you?" },
+        { who: "caller", text: "Friday at 10 in the morning, if that's available." },
+        { who: "hayley", text: "Friday at 10 is available. And what's the best phone number for your confirmation text?" },
+        { who: "caller", text: "Five five five, zero one four, two two eight nine." },
+        { who: "hayley", text: "Let me confirm: that's a " + svcName + " for Alex Morgan, on " + when + ". I'll text the confirmation to 555 014 2289. Does that all sound right?", action: "book" },
+        { who: "caller", text: "Yes, that's right." },
+        { who: "hayley", text: "You're all booked in, Alex! You'll get a confirmation text shortly, and we'll see you on Friday at 10. Thanks for calling " + bizName() + " — have a great day!" }
+      ]
+    };
+  }
+
+  function setSampleUI(playing){
+    samplePlaying = playing;
+    if (btnSample) {
+      btnSample.textContent = playing ? "🔊 Playing sample call…" : "▶ Play sample call";
+      btnSample.classList.toggle("playing", playing);
+      btnSample.disabled = playing;
+    }
+    if (btnSampleHero) btnSampleHero.disabled = playing;
+    if (btnStopSample) btnStopSample.hidden = !playing;
+  }
+
+  function stopSample(silent){
+    if (!samplePlaying && !silent) return;
+    setSampleUI(false);
+    clearTimeout(sampleTimer);
+    if (currentFallbackTimer) { clearTimeout(currentFallbackTimer); currentFallbackTimer = null; }
+    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch(e){} }
+    clearInterval(keepAliveIv);
+    speaking = false;
+    phoneCard.classList.remove("speaking", "listening");
+    if (callActive && !silent) {
+      // sample owned this call session — close it cleanly
+      callActive = false; stage = "idle";
+      stopTimer(); stopListening();
+      btnCall.hidden = false; btnEnd.hidden = true;
+      setCallState(false, "Ready");
+      addMsg("system", "Sample call stopped");
+      setStatus("Sample stopped. Tap <strong>Play sample call</strong> to hear the whole thing, or start a live call.");
+    }
+  }
+
+  function playSampleCall(){
+    if (samplePlaying) return;
+    // If a live call is running, end it first so the two don't talk over each other
+    if (callActive) { try { endCall(true); } catch(e){} }
+    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch(e){} }
+    ensureVoices(function(){
+      var script = sampleScript();
+      var steps = script.steps;
+      var idx = 0;
+      var booked = false;
+      callActive = true;
+      stage = "intent";
+      callsHandled++;
+      renderBookings();
+      btnCall.hidden = true;
+      btnEnd.hidden = false;
+      setCallState(true, "Sample call");
+      startTimer();
+      setSampleUI(true);
+      addMsg("system", "Sample call · " + bizName() + " — no microphone needed");
+      setStatus("<strong>Playing sample call…</strong> listen — Hayley handles the whole booking.");
+      try { if (phoneCard.scrollIntoView) phoneCard.scrollIntoView({ behavior: "smooth", block: "center" }); } catch(e){}
+
+      function finishSample(){
+        setSampleUI(false);
+        callActive = false; stage = "idle";
+        stopTimer();
+        btnCall.hidden = false; btnEnd.hidden = true;
+        setCallState(false, "Ready");
+        addMsg("system", "Sample call ended — booking saved above");
+        setStatus("That's the whole call — and the booking is in <strong>Bookings captured</strong>. Play it again, try a live call, or type below.");
+      }
+      function next(){
+        if (!samplePlaying) return;
+        if (idx >= steps.length) { finishSample(); return; }
+        var step = steps[idx]; idx++;
+        addMsg(step.who, step.text);
+        if (step.action === "book" && !booked) {
+          booked = true;
+          // Land the booking at the confirm moment, exactly like a live call
+          refCounter += 2;
+          bookings.unshift({
+            name: script.name, service: script.svc, when: script.when,
+            phone: script.phoneDisplay, ref: "HLY-" + refCounter,
+            time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+          });
+          renderBookings();
+          addMsg("system", "Booking captured — HLY-" + refCounter);
+        }
+        speakUtterance(step.text, step.who, function(){
+          if (!samplePlaying) return;
+          sampleTimer = setTimeout(next, step.who === "hayley" ? 420 : 320);
+        });
+      }
+      next();
+    });
+  }
+
+  /* ---------------- Call lifecycle ---------------- */
+  function startTimer(){
+    timerSec = 0;
+    callTimer.textContent = "0:00";
+    clearInterval(timerInt);
+    timerInt = setInterval(function(){
+      timerSec++;
+      var m = Math.floor(timerSec / 60), s = timerSec % 60;
+      callTimer.textContent = m + ":" + (s < 10 ? "0" : "") + s;
+    }, 1000);
+  }
+  function stopTimer(){ clearInterval(timerInt); }
+
+  function startCall(afterGreeting){
+    if (samplePlaying) { if (afterGreeting) afterGreeting(); return; }
+    if (callActive) { if (afterGreeting) afterGreeting(); return; }
+    // Ask for the mic up front, so the native permission prompt appears before
+    // Hayley starts talking. If it's blocked/denied, we still run the call —
+    // Hayley talks, and the caller types. If there's no mic API at all
+    // (in-app browser, local file), we just proceed with text + sample.
+    requestMicPermission().then(function(state){
+      if (state === "denied") {
+        showMicBlocked();
+      } else if (state === "granted") {
+        voiceWanted = true;
+        btnMic.classList.add("on");
+        hideMicHelp();
+      }
+      beginCall(afterGreeting);
+    });
+  }
+
+  function beginCall(afterGreeting){
+    callActive = true;
+    stage = "intent";
+    draft = { name: "", service: null, when: "", phone: "" };
+    callsHandled++;
+    renderBookings();
+    btnCall.hidden = true;
+    btnEnd.hidden = false;
+    setCallState(true, "On call");
+    startTimer();
+    addMsg("system", "Call connected · " + bizName());
+    var greeting = "Thank you for calling " + bizName() + "! This is Hayley, the AI receptionist. How can I help you today?";
+    // Make sure a voice is actually loaded before the greeting, so the first
+    // thing Hayley says isn't swallowed by an empty voices list.
+    ensureVoices(function(){
+      speak(greeting, function(){
+        listenNext();
+        if (afterGreeting) afterGreeting();
+      });
+    });
+  }
+
+  function endCall(silent){
+    if (!callActive) return;
+    if (samplePlaying) setSampleUI(false);
+    clearTimeout(sampleTimer);
+    callActive = false;
+    stage = "idle";
+    speaking = false;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    stopListening();
+    stopTimer();
+    phoneCard.classList.remove("speaking", "listening");
+    btnCall.hidden = false;
+    btnEnd.hidden = true;
+    setCallState(false, "Ready");
+    captionEl.textContent = "";
+    if (!silent) {
+      addMsg("system", "Call ended");
+      setStatus("Call ended. Press <strong>Start Call</strong> to run it again — try a different business type this time.");
+    } else {
+      setStatus("Call ended. That booking is saved in the panel on the right.");
+    }
+  }
+
+  if (btnSample) btnSample.addEventListener("click", playSampleCall);
+  if (btnSampleHero) btnSampleHero.addEventListener("click", playSampleCall);
+  if (btnMicAlertSample) btnMicAlertSample.addEventListener("click", playSampleCall);
+  if (btnMicHelpSample) btnMicHelpSample.addEventListener("click", playSampleCall);
+  if (btnMicRetry) btnMicRetry.addEventListener("click", function(){
+    hideMicHelp();
+    setStatus("Asking for the microphone… allow it when Chrome asks.");
+    requestMicPermission().then(function(state){
+      if (state === "granted") {
+        voiceWanted = true;
+        btnMic.classList.add("on");
+        hideMicHelp();
+        setStatus("Microphone is on. Tap <strong>Start Call</strong> to talk to Hayley.");
+        if (callActive && !speaking) startListening();
+      } else if (state === "denied") {
+        showMicBlocked();
+      } else {
+        setStatus("This browser can't use the microphone here. Open the demo in the <strong>Chrome app</strong> and allow the mic — or use the sample call / type below.");
+      }
+    });
+  });
+  if (btnStopSample) btnStopSample.addEventListener("click", function(){ stopSample(false); });
+  btnCall.addEventListener("click", function(){ startCall(); });
+  btnEnd.addEventListener("click", function(){
+    if (samplePlaying) { stopSample(false); return; }
+    if (callActive) {
+      speak("Thanks for calling " + bizName() + " — have a great day!", function(){});
+      setTimeout(function(){ endCall(true); }, 600);
+      callActive = false; stage = "idle";
+      stopTimer(); stopListening();
+      btnCall.hidden = false; btnEnd.hidden = true;
+      setCallState(false, "Ready");
+      addMsg("system", "Call ended");
+    }
+  });
+  btnMic.addEventListener("click", function(){
+    if (!recogSupported) return;
+    voiceWanted = !voiceWanted;
+    btnMic.classList.toggle("on", voiceWanted);
+    if (!voiceWanted) { stopListening(); setStatus("Microphone off — type what the customer says below."); }
+    else if (callActive && !speaking) { startListening(); }
+  });
+  if (recogSupported) btnMic.classList.add("on");
+
+  /* ---------------- Text fallback ---------------- */
+  $("textForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var v = $("textInput").value.trim();
+    if (!v) return;
+    if (samplePlaying) { setStatus("Sample call is playing — tap <strong>Stop sample call</strong> first if you want to type instead."); return; }
+    $("textInput").value = "";
+    if (!callActive) startCall(function(){ callerSays(v); });
+    else callerSays(v);
+  });
+
+  /* ---------------- Init ---------------- */
+  renderTypes();
+  renderServices();
+  renderChips();
+  renderBookings();
+})();
+</script>
+  </body>
+</html>
